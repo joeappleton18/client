@@ -40,7 +40,9 @@ module.exports = function (config) {
     const allFiles = testFiles
       .map(pattern => glob.sync(pattern, { cwd: __dirname }))
       .flat();
-    testFiles = allFiles.filter(path => path.match(config.grep));
+    testFiles = allFiles.filter(path =>
+      config.grep.some(grep => path.match(grep))
+    );
 
     // eslint-disable-next-line no-console
     console.log(`Running tests matching pattern "${config.grep}": `, testFiles);

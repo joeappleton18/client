@@ -34,13 +34,22 @@ const IMAGES_DIR = 'build/images';
 function parseCommandLine() {
   commander
     .option(
-      '--grep [pattern]',
+      '--grep [pattern...]',
       'Run only tests where filename matches a pattern'
+    )
+    .option('--watch', 'Continuously run tests (default: false)', false)
+    .option(
+      '--browser [browsers...]',
+      'Run test with this browsers (default "ChromeHeadless_Custom")',
+      ['ChromeHeadless_Custom']
     )
     .parse(process.argv);
 
+  const options = commander.opts();
   return {
-    grep: commander.opts().grep,
+    grep: options.grep,
+    watch: options.watch,
+    browser: options.browser,
   };
 }
 
@@ -352,13 +361,14 @@ gulp.task(
   )
 );
 
-function runKarma({ singleRun }, done) {
+function runKarma(done) {
   const karma = require('karma');
   new karma.Server(
     {
       configFile: path.resolve(__dirname, './src/karma.config.js'),
       grep: taskArgs.grep,
-      singleRun,
+      singleRun: !taskArgs.watch,
+      browsers: taskArgs.browser,
     },
     done
   ).start();
@@ -368,9 +378,5 @@ function runKarma({ singleRun }, done) {
 // Some (eg. a11y) tests rely on CSS bundles, so build these first.
 gulp.task(
   'test',
-  gulp.series('build-css', done => runKarma({ singleRun: true }, done))
-);
-gulp.task(
-  'test-watch',
-  gulp.series('build-css', done => runKarma({ singleRun: false }, done))
+  gulp.series('build-css', done => runKarma(done))
 );
